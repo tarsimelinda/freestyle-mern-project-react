@@ -137,9 +137,6 @@ mvn spring-boot:run
 The backend runs at http://localhost:8080
  and exposes REST endpoints under /api.
 
-   ```js
-   const API_KEY = 'ENTER YOUR API';
-   ```
 5. Change git remote url to avoid accidental pushes to base project
    ```sh
    git remote set-url origin github_username/repo_name

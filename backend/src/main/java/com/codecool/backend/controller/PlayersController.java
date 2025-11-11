@@ -10,12 +10,15 @@ import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/players")
 public class PlayersController {
 
     private final PlayerRepository repository;
+
+    private static final Set<String> ALLOWED_STATUS = Set.of("playing", "menu", "dead");
 
     public PlayersController(PlayerRepository repository) {
         this.repository = repository;
@@ -49,11 +52,15 @@ public class PlayersController {
         Player p = repository.findByName(name)
                 .orElseThrow(() -> new NotFoundException("Player not found: " + name));
 
-        if (body.hp() != null)     p.setHp(body.hp());
-        if (body.coins() != null)  p.setCoins(body.coins());
+        if (body.hp() != null)    p.setHp(Math.max(0, body.hp()));        // min 0
+        if (body.coins() != null) p.setCoins(Math.max(0, body.coins()));  // min 0
         if (body.shield() != null) p.setShield(body.shield());
-        if (body.status() != null) p.setStatus(body.status());
-
+        if (body.status() != null) {
+            if (!ALLOWED_STATUS.contains(body.status())) {
+                throw new IllegalArgumentException("Invalid status value");
+            }
+            p.setStatus(body.status());
+        }
         return repository.save(p);
     }
 
