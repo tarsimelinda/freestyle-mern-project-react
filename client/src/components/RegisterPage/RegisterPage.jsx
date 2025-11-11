@@ -21,7 +21,9 @@ export default function RegisterPage() {
     }, [playerCount]);
 
     const handleChange = (index, field, value) => {
-        setPlayersData((prev) => prev.map((p, i) => (i === index ? { ...p, [field]: value } : p)));
+        setPlayersData((prev) =>
+            prev.map((p, i) => (i === index ? { ...p, [field]: value } : p))
+        );
     };
 
     const onSubmit = async (e) => {
@@ -33,12 +35,37 @@ export default function RegisterPage() {
         }
 
         setLoading(true);
+        setError(null);
+
         try {
+            // Send a POST request for each player
+            const responses = await Promise.all(
+                playersData.map((player) =>
+                    fetch("/api/users", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            name: player.name,
+                            character: player.character,
+                        }),
+                    })
+                )
+            );
+
+            // Check for any failed requests
+            const failed = responses.find((res) => !res.ok);
+            if (failed) {
+                throw new Error("One or more player registrations failed.");
+            }
+
+            // Save players data in sessionStorage and navigate to /game
             sessionStorage.setItem("playersData", JSON.stringify(playersData));
             navigate("/game", { state: { playersData } });
         } catch (err) {
             console.error(err);
-            setError("Failed to start the game.");
+            setError("Failed to register players. Please try again.");
         } finally {
             setLoading(false);
         }
